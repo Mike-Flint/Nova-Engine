@@ -1,4 +1,4 @@
-#include "Texture.h" // Підключення заголовочного файлу класу Texture.
+#include "Texture.hpp" // Підключення заголовочного файлу класу Texture.
 
 // Конструктор класу Texture для завантаження текстури.
 Texture::Texture(const char* image, const char* texType, const GLuint& slot, const GLenum& format, const GLenum& pixelType) {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glad/glad.h>
-#include "Shader.h"
+#include "Shader.hpp"
 #include "stb_image.h" // Завантаження зображень як текстур.
 
 class Texture {

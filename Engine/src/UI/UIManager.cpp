@@ -1,14 +1,53 @@
-#include "UIManager.h"
+#include "UIManager.hpp"
 
 
-const float TITLE_BAR_HEIGHT = 32.0f;
+const float BUTTON_HEIGHT = 32.0f;
 const float BUTTON_WIDTH = 50.0f;
 
-// UIManager.cpp
+void setupInitialDockSpaceLayout() {
+    ImGuiID dockspace_id = ImGui::GetID("DockSpace"); // ID головного DockSpace
+
+    // Очистити будь-який попередній макет (важливо для запуску)
+    ImGui::DockBuilderRemoveNode(dockspace_id);
+    // Додати головний вузол док-простору назад
+    ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace);
+    // Встановити розмір головного вузла DockSpace, щоб він заповнював весь батьківський простір
+    ImGui::DockBuilderSetNodeSize(dockspace_id, ImVec2(ImGui::GetMainViewport()->WorkSize.x, 35));
+
+
+    ImGuiID top_node_id;      // ID вузла для верхньої панелі
+    ImGuiID central_node_id;  // ID вузла для решти панелей
+
+    // Розділити головний DockSpace:
+    // ImGuiDir_Up: створює вузол зверху
+    // MENU_BAR_HEIGHT / ImGui::GetMainViewport()->WorkSize.y: пропорція висоти верхнього вузла
+    // &top_node_id: ID нового верхнього вузла
+    // ¢ral_node_id: ID решти (центрального) вузла
+    ImGui::DockBuilderSplitNode(dockspace_id, ImGuiDir_Up, 35 / ImGui::GetMainViewport()->WorkSize.y, &top_node_id, &central_node_id);
+
+    // *** Прикріплюємо нашу панель "CustomTitleBar" до верхнього вузла ***
+    ImGui::DockBuilderDockWindow("CustomTitleBar", top_node_id);
+
+    // === Встановлюємо прапорці для верхнього вузла, щоб зробити його ФІКСОВАНИМ ===
+    ImGuiDockNode* topNode = ImGui::DockBuilderGetNode(top_node_id);
+    if (topNode) {
+        topNode->LocalFlags |= ImGuiDockNodeFlags_NoTabBar |         // Не показувати панель вкладок (бо там тільки 1 вікно)
+                                ImGuiDockNodeFlags_NoResize |       // Не дозволяти змінювати розмір цього вузла користувачем
+                                ImGuiDockNodeFlags_NoDocking |      // Не дозволяти іншим вікнам докуватися *у* цей вузол
+                                ImGuiDockNodeFlags_NoDockingOverMe; // Не дозволяти цей вузол перетягувати кудись
+    }
+
+    // *** Прикріплюємо інші панелі до центрального вузла ***
+    // (ВАЖЛИВО: "My Content Panel" має бути точним ім'ям ImGui-вікна,
+    // яке використовується у функції drawUI()!)
+    ImGui::DockBuilderDockWindow("Content Panel", central_node_id);
+
+    // Завершуємо створення макета DockSpace
+    ImGui::DockBuilderFinish(dockspace_id);
+}
+
 
 void UIManager::drawUI() {
-
-
     // Встановлюємо, щоб наше вікно займало весь екран
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(viewport->WorkPos);
@@ -32,93 +71,112 @@ void UIManager::drawUI() {
     ImGui::PopStyleVar(3);
 
     // Створюємо сам Dockspace всередині цього вікна
-    ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+    ImGuiID dockspace_id = ImGui::GetID("DockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
 
 
-    // 2. Тепер малюємо ВСІ наші звичайні вікна
-    // -----------------------------------------------------------------
-    // ImGui автоматично дозволить їх "пристиковувати" до нашого Dockspace
+    {
+        ImVec2 window_pos = ImGui::GetWindowPos();
+        ImVec2 window_size = ImGui::GetWindowSize();
 
-    drawTitleBar(); // Ваш кастомний TitleBar
+        glfwSetWindowPos(GState::window, window_pos.x, window_pos.y);
+        glfwSetWindowSize(GState::window, window_size.x, window_size.y);
+    }
+    drawTitleBar();
 
+    int dockSpaceInitialized = false;
+    if(!dockSpaceInitialized){
+        dockSpaceInitialized = true;
+        setupInitialDockSpaceLayout();
+    }
 
-    // drawOutliner(viewPortSize);
-    // drawDetailsPanel(viewPortSize);
-    // drawContentBrowser(viewPortSize);
-    // drawaViewport(vpFBO); // Viewport теж буде докабельним вікном!
+   
 
+    
+    // contentBrowser.draw();
+    // detailsPanel.draw();
+    // outliner.draw();
+    viewPort.draw();
+    
 
+    ImGui::ShowDemoWindow();
 
-    // Можна додати й інші стандартні вікна для демонстрації
-    // ImGui::ShowDemoWindow(); 
-
-    // 3. Завершуємо створення нашого головного вікна
-    // -----------------------------------------------------------------
     ImGui::End();
-
-
-    // 4. Ваш старий код для обробки вводу та рендерингу
-    // -----------------------------------------------------------------
+    
     // winInput.resizeWindow();
     winInput.windowInput();
     imGui.render();
-}
 
+
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable){
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        GLFWwindow* backup_current_context = glfwGetCurrentContext();
+        ImGui::UpdatePlatformWindows();
+        ImGui::RenderPlatformWindowsDefault();
+        glfwMakeContextCurrent(backup_current_context);
+    }
+}
 
 void UIManager::drawTitleBar() {
     
-    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(5.0f, 11.0f));
-    if (ImGui::BeginMainMenuBar()) {
+    
+    if (ImGui::Begin("CustomTitleBar", nullptr, ImGuiWindowFlags_NoDocking)) {
         
-        // Створюємо перший пункт меню, наприклад, "File"
-        if (ImGui::BeginMenu("File")) {
-            // Додаємо підпункти
+        if (ImGui::Button("File")) {
+            ImGui::OpenPopup("FileMenuPopup");
+        }
+        if (ImGui::BeginPopup("FileMenuPopup")) {
             if (ImGui::MenuItem("New Project", "Ctrl+N")) {
-                // Код, який виконається при натисканні
+                // Your logic
             }
             if (ImGui::MenuItem("Open Project", "Ctrl+O")) {
-                // ...
+                // Your logic
             }
-            ImGui::Separator(); // Додаємо розділювач
+            ImGui::Separator();
             if (ImGui::MenuItem("Exit")) {
                 glfwSetWindowShouldClose(GState::window, GLFW_TRUE);
             }
-            ImGui::EndMenu(); // Завершуємо меню "File"
+            ImGui::EndPopup();
         }
+        ImGui::SameLine();
 
-        // Створюємо другий пункт меню, наприклад, "Edit"
-        if (ImGui::BeginMenu("Edit")) {
+        // Edit Menu
+        if (ImGui::Button("Edit")) {
+            ImGui::OpenPopup("EditMenuPopup");
+        }
+        if (ImGui::BeginPopup("EditMenuPopup")) {
             if (ImGui::MenuItem("Undo", "Ctrl+Z")) {}
             if (ImGui::MenuItem("Redo", "Ctrl+Y")) {}
-            ImGui::EndMenu();
+            ImGui::EndPopup();
         }
+        ImGui::SameLine();
 
-        ImGui::PopStyleVar();
+        // Pop style after menu items, before window control buttons
 
+        // --- 2. Window Control Buttons (Minimize, Maximize, Close) ---
         float totalButtonsWidth = BUTTON_WIDTH * 3;
-        ImGui::SetCursorPosX(ImGui::GetWindowWidth() - totalButtonsWidth - 2);
-        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 2);
+        // Position cursor to the right side of the current *ImGui window*
+        ImGui::SetCursorPosX(ImGui::GetWindowWidth() - totalButtonsWidth - ImGui::GetStyle().WindowPadding.x - ImGui::GetStyle().ItemSpacing.x * 2);
+        // ImGui::SetCursorPosY(ImGui::GetCursorPosY() + 2); // Adjust Y if needed, SameLine often handles it
 
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); 
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); 
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.7f, 0.7f, 0.7f, 0.5f)); 
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // Transparent
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.5f, 0.5f, 0.5f, 0.5f)); // Grey hover
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.7f, 0.7f, 0.7f, 0.5f)); // Darker grey active
 
-        // Рисуем первую кнопку
-        if (ImGui::Button("-##minimize", ImVec2(BUTTON_WIDTH, TITLE_BAR_HEIGHT))) {
+        if (ImGui::Button("-##minimize", ImVec2(BUTTON_WIDTH, BUTTON_HEIGHT))) {
             glfwIconifyWindow(GState::window);
         }
-        ImGui::SameLine(0, 0);
+        ImGui::SameLine(0, 0); // No spacing between buttons
 
-        // Рисуем вторую кнопку
-        if (ImGui::Button("@##maximize", ImVec2(BUTTON_WIDTH, TITLE_BAR_HEIGHT))) {
+        if (ImGui::Button("@##maximize", ImVec2(BUTTON_WIDTH, BUTTON_HEIGHT))) {
             if (GState::isWindowMaximized) {
-                // ... ваш код для восстановления окна ...
+                // Restore window
                 glfwSetWindowPos(GState::window, m_preMaximizePos.x, m_preMaximizePos.y);
                 glfwSetWindowSize(GState::window, m_preMaximizeSize.width, m_preMaximizeSize.height);
                 GState::isWindowMaximized = false;
             } else {
-                // ... ваш код для максимизации окна ...
+                // Maximize window
                 glfwGetWindowPos(GState::window, &m_preMaximizePos.x, &m_preMaximizePos.y);
                 glfwGetWindowSize(GState::window, &m_preMaximizeSize.width, &m_preMaximizeSize.height);
                 GLFWmonitor* monitor = WindowInput::findCurrentMonitor();
@@ -127,29 +185,21 @@ void UIManager::drawTitleBar() {
                     glfwGetMonitorWorkarea(monitor, &workX, &workY, &workWidth, &workHeight);
                     glfwSetWindowPos(GState::window, workX, workY);
                     glfwSetWindowSize(GState::window, workWidth, workHeight);
-                    GState::isWindowMaximized  = true;
+                    GState::isWindowMaximized = true;
                 }
             }
         }
-
-        // Убираем стили, которые применялись к первым двум кнопкам
         ImGui::PopStyleColor(3);
 
-        // --- БЛОК 2: Стили ТОЛЬКО для кнопки "Закрыть" ---
-        ImGui::SameLine(0, 0);
+        ImGui::SameLine(0, 0); // No spacing between buttons
 
-        // Задаем новый, КРАСНЫЙ стиль
-        // R=1.0f, G=0.2f, B=0.2f - приятный красный оттенок
-        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));           // Обычное состояние - прозрачное
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.2f, 0.2f, 0.8f));   // При наведении - полупрозрачный красный
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.8f, 0.1f, 0.1f, 1.0f));    // При нажатии - насыщенный темно-красный
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));           // Transparent
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(1.0f, 0.2f, 0.2f, 0.8f));   // Red hover
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.8f, 0.1f, 0.1f, 1.0f));    // Dark red active
 
-        // Рисуем красную кнопку
-        if (ImGui::Button("X##close", ImVec2(BUTTON_WIDTH, TITLE_BAR_HEIGHT))) {
+        if (ImGui::Button("X##close", ImVec2(BUTTON_WIDTH, BUTTON_HEIGHT))) {
             glfwSetWindowShouldClose(GState::window, GLFW_TRUE);
         }
-
-
         ImGui::PopStyleColor(3);
 
         if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left) && !GState::isMouseBusy) {
@@ -183,47 +233,7 @@ void UIManager::drawTitleBar() {
             GState::isMouseBusy = false; 
         }
 
-        ImGui::EndMainMenuBar();
+        ImGui::End();
     }
-}
 
-void UIManager::drawOutliner(const glm::ivec2& viewPortSize) {
-    // ImGui::SetNextWindowPos(ImVec2((float)viewPortSize.x, TITLE_BAR_HEIGHT));
-    // ImGui::SetNextWindowSize(ImVec2((float)GState::winSize.width - viewPortSize.x, (float)viewPortSize.y / 2));
-    ImGui::Begin("Outliner");
-    ImGui::Text("Give ME");
-    ImGui::End();
-}
-
-void UIManager::drawDetailsPanel(const glm::ivec2& viewPortSize) {
-    // ImGui::SetNextWindowPos(ImVec2((float)viewPortSize.x, (float)viewPortSize.y / 2 + TITLE_BAR_HEIGHT));
-    // ImGui::SetNextWindowSize(ImVec2((float)GState::winSize.width - viewPortSize.x, (float)viewPortSize.y / 2));
-    ImGui::Begin("Details");
-    ImGui::Text("Details");
-    ImGui::End();
-}
-
-void UIManager::drawContentBrowser(const glm::ivec2& viewPortSize) {
-    // ImGui::SetNextWindowPos(ImVec2(0, (float)viewPortSize.y + TITLE_BAR_HEIGHT));
-    // ImGui::SetNextWindowSize(ImVec2((float)GState::winSize.width, (float)GState::winSize.height - viewPortSize.y - TITLE_BAR_HEIGHT));
-    ImGui::Begin("Content Browser");
-    ImGui::Text("File");
-    ImGui::End();
-}
-
-void UIManager::drawaViewport( FBO* vpFBO) {
-    // ImGui::SetNextWindowPos(ImVec2(0, 500));
-    // ImGui::SetNextWindowSize(ImVec2(500, 500));
-
-    ImGui::Begin("3D Viewport");
-
-    // Отримуємо розмір доступної області всередині вікна
-    ImVec2 viewportSize = ImGui::GetContentRegionAvail();
-
-    // Малюємо текстуру з нашого FBO
-    // (void*)(intptr_t)myFBO.textureId - стандартний спосіб передати OpenGL ID в ImGui
-    // ImVec2(0, 1) і ImVec2(1, 0) перевертають текстуру по осі Y, що часто потрібно для OpenGL
-    ImGui::Image((void*)(intptr_t)vpFBO->textureId, viewportSize, ImVec2(0, 1), ImVec2(1, 0));
-
-    ImGui::End();
 }

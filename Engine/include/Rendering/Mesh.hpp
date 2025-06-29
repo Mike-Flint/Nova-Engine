@@ -2,10 +2,10 @@
 
 #include <string>
 
-#include "VAO.h"
-#include "EBO.h"
-#include "FBO.h"
-#include "Camera.h"
+#include "VAO.hpp"
+#include "EBO.hpp"
+#include "FBO.hpp"
+#include "Camera.hpp"
 #include "stb_image.h" 
 // #include "Texture.h"
 

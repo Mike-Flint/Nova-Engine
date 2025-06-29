@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
-#include "GState.h"
+#include "GState.hpp"
 #include "imgui.h"
 // #include "imgui_impl_opengl3_loader.h"
 #include "imgui_impl_glfw.h"

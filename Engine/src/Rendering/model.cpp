@@ -1,4 +1,4 @@
-#include "Model.h"
+#include "Model.hpp"
 
 
 void Model::init(char* path, bool gamma){

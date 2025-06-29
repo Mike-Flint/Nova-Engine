@@ -1,5 +1,8 @@
-#include "DetailsPanel.h"
+#include "DetailsPanel.hpp"
 
-class DetailsPanel{
-    
-};
+void WindowDetailsPanel::draw(){
+    ImGui::Begin("Details");
+    ImGui::Text("Details");
+
+    ImGui::End();
+}

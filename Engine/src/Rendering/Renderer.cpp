@@ -1,4 +1,4 @@
-#include "Renderer.h"
+#include "Renderer.hpp"
 
 
 GLuint CreateSquareOnScreen(){
@@ -10,6 +10,35 @@ GLuint CreateSquareOnScreen(){
         {{-1.0f, -1.0f, 0.0f}, {}, {}, {0.0f, 0.0f}, {}},
         {{ 1.0f, -1.0f, 0.0f}, {}, {}, {1.0f, 0.0f}, {}},
         {{ 1.0f,  1.0f, 0.0f}, {}, {}, {1.0f, 1.0f}, {}}
+    };
+
+    VBO VBO(quadVertices);
+
+    std::vector<GLuint> quadIndices = {
+        0, 1, 2, 
+        0, 2, 3 
+    };
+
+    EBO EBO(quadIndices);
+
+    VAO.LinkAttrib(VBO, 0, 3, GL_FLOAT, sizeof(Vertex), (void*)0);
+    VAO.LinkAttrib(VBO, 2, 2, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+
+    VAO.Unbind();
+    VBO.Unbind();
+    EBO.Unbind();
+    return VAO.ID;
+}
+
+GLuint CreateSquareOnScreenn(){
+    VAO VAO;
+    VAO.Bind();
+
+    std::vector<Vertex> quadVertices = {
+        {{-0.5f,  0.5f, 0.0f}, {}, {}, {0.0f, 1.0f}, {}},
+        {{-0.5f, -0.5f, 0.0f}, {}, {}, {0.0f, 0.0f}, {}},
+        {{ 0.5f, -0.5f, 0.0f}, {}, {}, {1.0f, 0.0f}, {}},
+        {{ 0.5f,  0.5f, 0.0f}, {}, {}, {1.0f, 1.0f}, {}}
     };
 
     VBO VBO(quadVertices);
@@ -58,37 +87,39 @@ Renderer::Renderer(){
     maskShader.Activate();
 	glUniformMatrix4fv(glGetUniformLocation(maskShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(objectModel));
 
-    maskFBO.init(GState::vpSize, GL_RED);
-    postFBO.init(GState::vpSize, GL_RGB, true);
-    viewportFBO.init(GState::vpSize, GL_RGB, true);
+    maskFBO.init(glm::ivec2(600, 600), GL_RED);
+    postFBO.init(glm::ivec2(600, 600), GL_RGB, true);
+    viewportFBO.init(glm::ivec2(600, 600), GL_RGB, true);
 
     squareID = CreateSquareOnScreen();
+    squareeID = CreateSquareOnScreenn();
 
-    camera.init(GState::vpSize, glm::ivec2(0, 35), glm::vec3(10.0f, 0.0f, 0.0f));
+    camera.init(glm::ivec2(600, 600), glm::ivec2(0, 35), glm::vec3(10.0f, 0.0f, 0.0f));
 }
 
-void Renderer::draw(){
+void Renderer::draw(glm::ivec2 vpSize){
     camera.inputs(GState::window);
     camera.updateMatrix(45.0f, 0.1f, 100.0f);
-    if (GState::vpSize.width > 1 || GState::vpSize.height > 1){
-        camera.updateSizeWindow(GState::vpSize);
-        maskFBO.updateSizeWindow(GState::vpSize);
-        postFBO.updateSizeWindow(GState::vpSize);
+    if (vpSize.width > 1 || vpSize.height > 1){
+        camera.updateSizeWindow(vpSize);
+        maskFBO.updateSizeWindow(vpSize);
+        postFBO.updateSizeWindow(vpSize);
+        viewportFBO.updateSizeWindow(vpSize);
     }
 
 
     maskFBO.Bind();
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    maskShader.Activate();
-    programModel.Draw(maskShader, camera);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        maskShader.Activate();
+        programModel.Draw(maskShader, camera);
     maskFBO.Unbind();
 
     postFBO.Bind();
-    glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    programShader.Activate();
-    programModel.Draw(programShader, camera);
+        glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        programShader.Activate();
+        programModel.Draw(programShader, camera);
     postFBO.Unbind();
 
     // glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -97,22 +128,22 @@ void Renderer::draw(){
 
 
     viewportFBO.Bind();
-    glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    postProcesShader.Activate();
-    // glViewport(0, GState::winSize.height - GState::vpSize.height - 35 , GState::vpSize.width, GState::vpSize.height);
+        postProcesShader.Activate();
+        glViewport(0, 0 , vpSize.width, vpSize.height);
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, postFBO.textureId);
-    glUniform1i(glGetUniformLocation(postProcesShader.ID, "screenTexture"), 0);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, postFBO.textureId);
+        glUniform1i(glGetUniformLocation(postProcesShader.ID, "screenTexture"), 0);
 
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, maskFBO.textureId);
-    glUniform1i(glGetUniformLocation(postProcesShader.ID, "maskTexture"), 1);
-    
-    glBindVertexArray(squareID);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glBindVertexArray(0);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, maskFBO.textureId);
+        glUniform1i(glGetUniformLocation(postProcesShader.ID, "maskTexture"), 1);
+        
+        glBindVertexArray(squareID);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+        glBindVertexArray(0);
     viewportFBO.Unbind();
 }

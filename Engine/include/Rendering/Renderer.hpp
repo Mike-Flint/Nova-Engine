@@ -1,6 +1,6 @@
 #pragma once
-#include "Model.h"
-#include "GState.h"
+#include "Model.hpp"
+#include "GState.hpp"
 
 class Renderer{
 private:
@@ -14,6 +14,7 @@ private:
     Camera camera;
 
     GLuint squareID;
+    GLuint squareeID;
 
     glm::mat4 objectModel;
 
@@ -24,5 +25,5 @@ public:
     FBO postFBO;
     Renderer();
 
-    void draw();
+    void draw(glm::ivec2 );
 };

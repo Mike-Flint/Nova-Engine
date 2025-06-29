@@ -1,26 +1,26 @@
 
-#include "WindowInput.h"
+#include "WindowInput.hpp"
 
 
 void WindowInput::resizeWindow() {
     if (!GState::isWindowMaximized){
         bool isLeftMousePressed = (glfwGetMouseButton(GState::window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
 
-        if (m_currentResizeState != ResizeState::NONE) {
+        if (m_currentResizeState != ImGuiMouseCursor_::ImGuiMouseCursor_None) {
             if (isLeftMousePressed) {
                 applyResize();
             } else {
 
-                m_currentResizeState = ResizeState::NONE;
+                m_currentResizeState = ImGuiMouseCursor_::ImGuiMouseCursor_None;
                 GState::isMouseBusy = false; 
             }
         } 
         else {
             if (!GState::isMouseBusy) {
-                ResizeState hoveredState = getHoveredState();
+                ImGuiMouseCursor_ hoveredState = getHoveredState();
                 updateCursor(hoveredState);
 
-                if (isLeftMousePressed && hoveredState != ResizeState::NONE) {
+                if (isLeftMousePressed && hoveredState != ImGuiMouseCursor_::ImGuiMouseCursor_None) {
                     m_currentResizeState = hoveredState;
                     GState::isMouseBusy = true;
 
@@ -30,68 +30,38 @@ void WindowInput::resizeWindow() {
                     m_initialScreenMouse = glm::dvec2((float)GState::winPos.x + GState::mouse.x, (float)GState::winPos.y + GState::mouse.y);
                 }
             } else {
-                updateCursor(ResizeState::NONE);
+                updateCursor(ImGuiMouseCursor_::ImGuiMouseCursor_None);
             }
         }
     }
 }
 
-WindowInput::ResizeState WindowInput::getHoveredState() const {
+ImGuiMouseCursor_ WindowInput::getHoveredState() const {
     bool nearLeft = GState::mouse.x >= 0 && GState::mouse.x <= edgeThreshold;
     bool nearRight = GState::mouse.x >= GState::winSize.width - edgeThreshold && GState::mouse.x <= GState::winSize.width;
     bool nearTop = GState::mouse.y >= 0 && GState::mouse.y <= edgeThreshold;
     bool nearBottom = GState::mouse.y >= GState::winSize.height - edgeThreshold && GState::mouse.y <= GState::winSize.height;
 
-    if (nearTop && nearLeft) return ResizeState::TOP_LEFT;
-    if (nearTop && nearRight) return ResizeState::TOP_RIGHT;
-    if (nearBottom && nearLeft) return ResizeState::BOTTOM_LEFT;
-    if (nearBottom && nearRight) return ResizeState::BOTTOM_RIGHT;
-    if (nearLeft) return ResizeState::LEFT;
-    if (nearRight) return ResizeState::RIGHT;
-    if (nearTop) return ResizeState::TOP;
-    if (nearBottom) return ResizeState::BOTTOM;
+    if (nearTop && nearLeft) return ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNWSE;
+    if (nearTop && nearRight) return ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNESW;
+    if (nearBottom && nearLeft) return ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNESW;
+    if (nearBottom && nearRight) return ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNWSE;
+    if (nearLeft) return ImGuiMouseCursor_::ImGuiMouseCursor_ResizeEW;
+    if (nearRight) return ImGuiMouseCursor_::ImGuiMouseCursor_ResizeEW;
+    if (nearTop) return ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNS;
+    if (nearBottom) return ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNS;
 
-    return ResizeState::NONE;
+    return ImGuiMouseCursor_::ImGuiMouseCursor_None;
 }
 
-void WindowInput::updateCursor(ResizeState state) {
-    static GLFWcursor* cursor = nullptr;
-    static ResizeState currentCursorState = ResizeState::NONE;
+void WindowInput::updateCursor(ImGuiMouseCursor_ state) {
+    static ImGuiMouseCursor_ currentCursorState = ImGuiMouseCursor_::ImGuiMouseCursor_None;
 
     if (state == currentCursorState) {
         return;
     }
-
-    currentCursorState = state;
-    if (cursor) {
-        glfwDestroyCursor(cursor);
-    }
-
-    int cursorShape = GLFW_ARROW_CURSOR;
-    switch (state) {
-        case ResizeState::LEFT:
-        case ResizeState::RIGHT:
-            cursorShape = GLFW_HRESIZE_CURSOR;
-            break;
-        case ResizeState::TOP:
-        case ResizeState::BOTTOM:
-            cursorShape = GLFW_VRESIZE_CURSOR;
-            break;
-        case ResizeState::TOP_LEFT:
-        case ResizeState::BOTTOM_RIGHT:
-            cursorShape = GLFW_RESIZE_NWSE_CURSOR;
-            break;
-        case ResizeState::TOP_RIGHT:
-        case ResizeState::BOTTOM_LEFT:
-            cursorShape = GLFW_RESIZE_NESW_CURSOR;
-            break;
-        default:
-            cursorShape = GLFW_ARROW_CURSOR;
-            break;
-    }
-
-    cursor = glfwCreateStandardCursor(cursorShape);
-    glfwSetCursor(GState::window, cursor);
+    
+    ImGui::SetMouseCursor(state);
 }
 
 void WindowInput::applyResize() {
@@ -103,29 +73,29 @@ void WindowInput::applyResize() {
     int newWidth = m_initialSize.width;
     int newHeight = m_initialSize.height;
 
-    if (m_currentResizeState == ResizeState::LEFT || m_currentResizeState == ResizeState::TOP_LEFT || m_currentResizeState == ResizeState::BOTTOM_LEFT) {
+    if (m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeEW || m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNWSE || m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNESW) {
         newX = m_initialWindow.x + (int)dx;
         newWidth = m_initialSize.width - (int)dx;
     }
-    if (m_currentResizeState == ResizeState::RIGHT || m_currentResizeState == ResizeState::TOP_RIGHT || m_currentResizeState == ResizeState::BOTTOM_RIGHT) {
+    else if (m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeEW || m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNESW || m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNWSE) {
         newWidth = m_initialSize.width + (int)dx;
     }
 
-    if (m_currentResizeState == ResizeState::TOP || m_currentResizeState == ResizeState::TOP_LEFT || m_currentResizeState == ResizeState::TOP_RIGHT) {
+    else if (m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNS || m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNWSE || m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNESW) {
         newY = m_initialWindow.y + (int)dy;
         newHeight = m_initialSize.height - (int)dy;
     }
-    if (m_currentResizeState == ResizeState::BOTTOM || m_currentResizeState == ResizeState::BOTTOM_LEFT || m_currentResizeState == ResizeState::BOTTOM_RIGHT) {
+    else if (m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNS || m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNESW || m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNWSE) {
         newHeight = m_initialSize.height + (int)dy;
     }
-    if (newWidth < minWidth) {
-        if (m_currentResizeState == ResizeState::LEFT || m_currentResizeState == ResizeState::TOP_LEFT || m_currentResizeState == ResizeState::BOTTOM_LEFT) {
+    else if (newWidth < minWidth) {
+        if (m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeEW || m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNWSE || m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNESW) {
             newX = m_initialWindow.x + m_initialSize.width - minWidth;
         }
         newWidth = minWidth;
     }
-    if (newHeight < minHeight) {
-        if (m_currentResizeState == ResizeState::TOP || m_currentResizeState == ResizeState::TOP_LEFT || m_currentResizeState == ResizeState::TOP_RIGHT) {
+    else if (newHeight < minHeight) {
+        if (m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNS || m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNWSE || m_currentResizeState == ImGuiMouseCursor_::ImGuiMouseCursor_ResizeNESW) {
             newY = m_initialWindow.y + m_initialSize.height - minHeight;
         }
         newHeight = minHeight;

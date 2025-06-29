@@ -4,13 +4,13 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-#include "WindowObjects.h"
-#include "WindowInput.h"
-#include "ImGuiRender.h"
+#include "WindowObjects.hpp"
+#include "WindowInput.hpp"
+#include "ImGuiRender.hpp"
 
-#include "GState.h"
+#include "GState.hpp"
 #include "imgui.h"
-#include "FBO.h"
+#include "FBO.hpp"
 #include <iostream>
 
 
@@ -20,10 +20,15 @@ public:
     UIManager() = default;
     ImGuiRender imGui;
 
-    void drawUI(const glm::ivec2& viewPortSize, FBO* vpFBO = nullptr);
+    void drawUI();
 
 private:
     WindowInput winInput;
+    
+    WindowContentBrowser contentBrowser;
+    WindowDetailsPanel detailsPanel;
+    WindowOutliner outliner;
+    WindowViewPort viewPort;
 
     glm::ivec2 m_preMaximizePos;
     glm::ivec2 m_preMaximizeSize;
@@ -33,10 +38,4 @@ private:
     bool m_isDraggingWindow = false;
 
     void drawTitleBar();
-    void drawOutliner(const glm::ivec2& viewPortSize);
-    void drawDetailsPanel(const glm::ivec2& viewPortSize);
-    void drawContentBrowser(const glm::ivec2& viewPortSize);
-    void drawaViewport( FBO* vpFBO);
-
-
 };

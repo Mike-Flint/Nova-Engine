@@ -1,4 +1,4 @@
-#include "EBO.h" // Підключення заголовочного файлу класу EBO.
+#include "EBO.hpp" // Підключення заголовочного файлу класу EBO.
 
 // Конструктор класу EBO (Element Buffer Object).
 EBO::EBO(std::vector<GLuint>& indices) {

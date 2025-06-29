@@ -9,8 +9,8 @@ public:
     static glm::dvec2 mouse;
     static glm::ivec2 winPos;
     static glm::ivec2 winSize;
-    static glm::ivec2 vpPerc;
-    static glm::ivec2 vpSize;
+    // static glm::ivec2 vpPerc;
+    // static glm::ivec2 vpSize;
 
 
     static bool isMouseBusy;

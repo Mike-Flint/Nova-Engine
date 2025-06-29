@@ -1,7 +1,8 @@
 #pragma once
 #include <GLFW/glfw3.h>
-#include "GState.h"
+#include "GState.hpp"
 #include <glm/glm.hpp>
+#include "imgui.h"
 
 class WindowInput{
 private:
@@ -9,27 +10,15 @@ private:
     const int minWidth = 700;
     const int minHeight = 400;
 
-    enum class ResizeState {
-        NONE,
-        LEFT,
-        RIGHT,
-        TOP,
-        BOTTOM,
-        TOP_LEFT,
-        TOP_RIGHT,
-        BOTTOM_LEFT,
-        BOTTOM_RIGHT
-    };
-
-    ResizeState m_currentResizeState = ResizeState::NONE;
+    ImGuiMouseCursor_ m_currentResizeState = ImGuiMouseCursor_::ImGuiMouseCursor_None;
 
     glm::ivec2 m_initialWindow;
     glm::ivec2 m_initialSize;
     glm::dvec2 m_initialMouse;
     glm::dvec2 m_initialScreenMouse;
 
-    ResizeState getHoveredState() const;
-    void updateCursor(ResizeState state);
+    ImGuiMouseCursor_ getHoveredState() const;
+    void updateCursor(ImGuiMouseCursor_ state);
     void applyResize();
 
 public:

@@ -3,6 +3,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
+#include "imgui.h"
+#include "GState.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include<glm/gtx/rotate_vector.hpp>
@@ -10,7 +12,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp> 
 
-#include "Shader.h"
+#include "Shader.hpp"
+
+
 
 class Camera{
 public:
@@ -34,12 +38,10 @@ private:
     int m_height;
 
     float m_speed = 0.1f;
-    float m_sensitivity = 100.0f;
+    float m_sensitivity = 0.1f;
 
     bool m_firstClick = true;
     bool m_isMousePressedInsideWindow = true;
 
     glm::ivec2 m_renderPosition;
-
-
 };

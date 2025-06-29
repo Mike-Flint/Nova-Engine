@@ -1,4 +1,4 @@
-#include "FBO.h"
+#include "FBO.hpp"
 #include <iostream>
 
 FBO::FBO(glm::ivec2& size, GLenum format, bool hasDepth)
@@ -80,7 +80,7 @@ void FBO::Initialize() {
 
 void FBO::Bind() {
     glBindFramebuffer(GL_FRAMEBUFFER, fboID);
-    // glViewport(0, 0, m_width, m_height);
+    glViewport(0, 0, m_width, m_height);
 }
 
 void FBO::Unbind() {

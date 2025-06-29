@@ -1,4 +1,4 @@
-#include "Camera.h"
+#include "Camera.hpp"
 
 Camera::Camera(glm::ivec2& size, glm::ivec2 renderPosition, glm::vec3 position)
     : m_width(size.width), m_height(size.height), m_renderPosition(renderPosition), position(position) {}
@@ -7,7 +7,7 @@ void Camera::init(glm::ivec2& size, glm::ivec2 renderPosition, glm::vec3 positio
     m_width = size.width;
     m_height = size.height;
     m_renderPosition = renderPosition;
-    position = position;
+    this->position = position;
 }
 
 void Camera::updateMatrix(float FOVdeg, float nearPlane, float farPlane) {
@@ -26,49 +26,57 @@ void Camera::updateSizeWindow(glm::ivec2& size){
 }
 
 void Camera::inputs(GLFWwindow* window){
-    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
-        position += m_speed * orientation;
-    }
-    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
-        position += m_speed * -glm::normalize(glm::cross(orientation, up));
-    }
-    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
-        position += m_speed * -orientation;
-    }
-    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
-        position += m_speed * glm::normalize(glm::cross(orientation, up));
-    }
-    if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
-        position += m_speed * up;
-    }
-    if(glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS){
-        position += m_speed * -up;
-    }
-    if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
-        m_speed = 0.4f;
-    }
-    if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE){
-        m_speed = 0.1f;
+    if(ImGui::IsWindowFocused()){
+        if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
+            position += m_speed * orientation;
+        }
+        if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
+            position += m_speed * -glm::normalize(glm::cross(orientation, up));
+        }
+        if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
+            position += m_speed * -orientation;
+        }
+        if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
+            position += m_speed * glm::normalize(glm::cross(orientation, up));
+        }
+        if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
+            position += m_speed * up;
+        }
+        if(glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS){
+            position += m_speed * -up;
+        }
+        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS){
+            m_speed = 0.4f;
+        }
+        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_RELEASE){
+            m_speed = 0.1f;
+        }
     }
 
-    if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS){
-        double mouseX;
-        double mouseY;
-        glfwGetCursorPos(window, &mouseX, &mouseY);
+    if(ImGui::IsMouseDown(ImGuiMouseButton_Left)){
+        ImVec2 size = ImGui::GetWindowSize();
+        
+        ImVec2 position = ImGui::GetWindowPos();
+    
+        glm::dvec2 mouse;
+        glfwGetCursorPos(window, &mouse.x, &mouse.y);
 
-        bool insideViewport = (mouseX >= m_renderPosition.x + 10) && (mouseX <= m_renderPosition.x + m_width) &&
-                            (mouseY >= m_renderPosition.y) && (mouseY <= m_renderPosition.y + m_height);
-        if(insideViewport && m_isMousePressedInsideWindow){
+        bool insideViewport = (mouse.x >= position.x - GState::winPos.x) && (mouse.x <= position.x - GState::winPos.x + size.x) &&
+                            (mouse.y >= position.y - GState::winPos.y) && (mouse.y <= position.y - GState::winPos.y + size.y);
+
+        if(insideViewport && m_isMousePressedInsideWindow && ImGui::IsWindowHovered()){
             if (m_firstClick){
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-                glfwSetCursorPos(window, (m_width / 2), (m_height / 2));
+                glfwSetCursorPos(window, position.x - GState::winPos.x + (size.x / 2), position.y - GState::winPos.y + (size.y / 2));
+                glfwGetCursorPos(window, &mouse.x, &mouse.y);
                 m_firstClick = false;
             }
 
-            glfwGetCursorPos(window, &mouseX, &mouseY);
+            int saveY = (float)((position.y - GState::winPos.y + (size.y / 2)));
+            int saveX = (float)((position.x - GState::winPos.x + (size.x / 2)));
 
-            float rotX = m_sensitivity * (float)(mouseY - (m_height / 2)) / m_height;
-            float rotY = m_sensitivity * (float)(mouseX - (m_width / 2)) / m_width;
+            float rotX = m_sensitivity * (mouse.y - saveY);
+            float rotY = m_sensitivity * (mouse.x - saveX);
 
             glm::vec3 newOrientation = glm::rotate(orientation, glm::radians(-rotX), glm::normalize(glm::cross(orientation, up)));
 
@@ -77,21 +85,18 @@ void Camera::inputs(GLFWwindow* window){
             }
             //left and right
             orientation = glm::rotate(orientation, glm::radians(-rotY), up);
-
-            glfwSetCursorPos(window, (m_width / 2), (m_height / 2));
+            glfwSetCursorPos(window,  position.x - GState::winPos.x + (size.x / 2) , position.y - GState::winPos.y + (size.y / 2));
         }else{
             m_isMousePressedInsideWindow = false;
         }
-
-    }
-
-    if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_RELEASE){
-
+    }else{
         m_isMousePressedInsideWindow = true;
         if (!m_firstClick){
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             m_firstClick = true;
         }
     }
+    
+
 }
 

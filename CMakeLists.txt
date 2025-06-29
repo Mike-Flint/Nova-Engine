@@ -53,6 +53,7 @@ target_include_directories(STB_Image PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/Vendor/s
 # find_package(assimp CONFIG REQUIRED)
 
 
+
 file(GLOB_RECURSE ENGINE_SOURCES "Engine/src/*.cpp")
 
 add_executable(OpenGL_Project 

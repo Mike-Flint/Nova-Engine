@@ -1,5 +1,7 @@
-#include "Outliner.h"
+#include "Outliner.hpp"
 
-class Outliner{
-    
-};
+void WindowOutliner::draw(){
+    ImGui::Begin("Outliner");
+    ImGui::Text("Give ME");
+    ImGui::End();
+}

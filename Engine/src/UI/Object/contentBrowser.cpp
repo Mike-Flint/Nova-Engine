@@ -1,5 +1,7 @@
-#include "ContentBrowser.h"
+#include "ContentBrowser.hpp"
 
-class ContentBrowser{
-    
-};
+void WindowContentBrowser::draw(){
+    ImGui::Begin("Content Browser");
+    ImGui::Text("File");
+    ImGui::End();
+}

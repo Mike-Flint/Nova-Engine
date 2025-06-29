@@ -1,4 +1,4 @@
-#include "Shader.h" // Підключення заголовочного файлу класу Shader.
+#include "Shader.hpp" // Підключення заголовочного файлу класу Shader.
 Shader::~Shader(){
     this->Delete();
 }
