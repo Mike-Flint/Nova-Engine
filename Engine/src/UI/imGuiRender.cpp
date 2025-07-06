@@ -1,6 +1,6 @@
 #include "ImGuiRender.hpp"
 
-void ImGuiRender::init(){
+ImGuiRender::ImGuiRender(){
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
@@ -24,7 +24,7 @@ void ImGuiRender::render() {
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-void ImGuiRender::destroy(){
+ImGuiRender::~ImGuiRender(){
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();

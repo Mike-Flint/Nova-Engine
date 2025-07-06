@@ -3,7 +3,7 @@ Shader::~Shader(){
     this->Delete();
 }
 
-void Shader::init(const char* vertexPath, const char* fragmentPath, const char* geometryPath){
+Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath){
     // Змінні для збереження коду вершинного та фрагментного шейдерів.
     std::string vertexCode;
     std::string fragmentCode;
@@ -93,10 +93,6 @@ void Shader::init(const char* vertexPath, const char* fragmentPath, const char* 
     glDeleteShader(fragment);
     if (geometryPath != nullptr)
         glDeleteShader(geometry);
-}
-
-Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* geometryPath) {
-    init(vertexPath, fragmentPath, geometryPath);
 }
 
 // Активація програми шейдерів.

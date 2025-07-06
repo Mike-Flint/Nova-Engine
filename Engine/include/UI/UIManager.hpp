@@ -5,7 +5,6 @@
 #include <glm/glm.hpp>
 
 #include "WindowObjects.hpp"
-#include "WindowInput.hpp"
 #include "ImGuiRender.hpp"
 
 #include "GState.hpp"
@@ -18,24 +17,26 @@
 class UIManager {
 public:
     UIManager() = default;
+    
     ImGuiRender imGui;
 
     void drawUI();
 
 private:
-    WindowInput winInput;
     
+    bool m_canResize = true;
+    bool m_checkDockingOnNextFrame = false;
+    bool m_wasMovingWindowLastFrame = true;
+    std::string m_layoutBeforeMove;
+
     WindowContentBrowser contentBrowser;
     WindowDetailsPanel detailsPanel;
-    WindowOutliner outliner;
+    WindowHierarchy hierarchy;
     WindowViewPort viewPort;
+    WindowTitleBar titleBar;
 
-    glm::ivec2 m_preMaximizePos;
-    glm::ivec2 m_preMaximizeSize;
+    void updateDockingLogic();
+    bool areAllWindowsDocked();
 
-    glm::ivec2 m_dragOffset{0, 0};
-
-    bool m_isDraggingWindow = false;
-
-    void drawTitleBar();
+    void drawDockspaceLayout();
 };

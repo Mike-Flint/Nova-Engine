@@ -24,8 +24,8 @@ public:
     glm::mat4 cameraMatrix = glm::mat4(1.0f);
 
     Camera() = default;
-    Camera(glm::ivec2& size, glm::ivec2 renderPosition, glm::vec3 position);
-    void init(glm::ivec2& size, glm::ivec2 renderPosition, glm::vec3 position);
+    Camera(glm::ivec2 size, glm::ivec2 renderPosition, glm::vec3 position);
+    void init(glm::ivec2 size, glm::ivec2 renderPosition, glm::vec3 position);
 
     void updateMatrix(float FOVdeg, float nearPlane, float farPlane);
     void updateSizeWindow(glm::ivec2& x);
@@ -34,6 +34,7 @@ public:
     void inputs(GLFWwindow* window);
 
 private:
+    bool isInitialized = false;
     int m_width;
     int m_height;
 

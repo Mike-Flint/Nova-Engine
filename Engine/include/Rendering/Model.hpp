@@ -18,11 +18,10 @@ public:
     std::string directory;
     bool gammaCorrection;
 
-    Model() = default;
-    Model(char* path, bool gamma = false) : gammaCorrection(gamma){
+    Model(const char* path, bool gamma = false) : gammaCorrection(gamma){
         loadModel(path);
     }
-    void init(char *path, bool gamma = false);
+
     void Draw(Shader &shader, Camera& camera);
     
 private:

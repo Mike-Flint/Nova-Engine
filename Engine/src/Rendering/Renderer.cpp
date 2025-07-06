@@ -60,32 +60,32 @@ GLuint CreateSquareOnScreenn(){
 }
 
 
-Renderer::Renderer(){
+Renderer::Renderer() : 
+    programShader("\\Assets\\Shaders\\vertex_shader.vs",
+                    "\\Assets\\Shaders\\fragment_shader.fs"),
 
+    maskShader("\\Assets\\Shaders\\mask.vs",
+                    "\\Assets\\Shaders\\mask.fs"),
+
+    postProcesShader("\\Assets\\Shaders\\postProces.vs",
+                        "\\Assets\\Shaders\\postProces.fs"),
+
+    programModel("\\Assets\\Object\\Sword\\Sword.obj")
+    {
+
+    isInitialized = true;
     stbi_set_flip_vertically_on_load(true);
-    
-    programShader.init("\\Assets\\Shaders\\vertex_shader.vs",
-                        "\\Assets\\Shaders\\fragment_shader.fs");
-                        // ,"\\Shaders\\geometry_shader.gs"
-    maskShader.init("\\Assets\\Shaders\\mask.vs",
-                        "\\Assets\\Shaders\\mask.fs");
-
-    postProcesShader.init("\\Assets\\Shaders\\postProces.vs",
-                        "\\Assets\\Shaders\\postProces.fs");
-
-    programModel.init("\\Assets\\Object\\Sword\\Sword.obj");
-    // backpackModel.init("\\Assets\\Object\\Backpack\\backpack.obj");
 
     glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	glm::vec3 lightPos = glm::vec3(1.0f, 0.0f, 1.0f);
-	objectModel = glm::mat4(1.0f);
+    glm::vec3 lightPos = glm::vec3(1.0f, 0.0f, 1.0f);
+    objectModel = glm::mat4(1.0f);
 
-	programShader.Activate();
+    programShader.Activate();
     glUniformMatrix4fv(glGetUniformLocation(programShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(objectModel));
     glUniform4f(glGetUniformLocation(programShader.ID, "lightColor"), lightColor.x, lightColor.y, lightColor.z, lightColor.w);
-	glUniform3f(glGetUniformLocation(programShader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
+    glUniform3f(glGetUniformLocation(programShader.ID, "lightPos"), lightPos.x, lightPos.y, lightPos.z);
     maskShader.Activate();
-	glUniformMatrix4fv(glGetUniformLocation(maskShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(objectModel));
+    glUniformMatrix4fv(glGetUniformLocation(maskShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(objectModel));
 
     maskFBO.init(glm::ivec2(600, 600), GL_RED);
     postFBO.init(glm::ivec2(600, 600), GL_RGB, true);
@@ -95,9 +95,15 @@ Renderer::Renderer(){
     squareeID = CreateSquareOnScreenn();
 
     camera.init(glm::ivec2(600, 600), glm::ivec2(0, 35), glm::vec3(10.0f, 0.0f, 0.0f));
+
+    GLuint error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::cerr << "OpenGL Error: " << error << std::endl;
+    }
 }
 
 void Renderer::draw(glm::ivec2 vpSize){
+
     camera.inputs(GState::window);
     camera.updateMatrix(45.0f, 0.1f, 100.0f);
     if (vpSize.width > 1 || vpSize.height > 1){
@@ -106,7 +112,6 @@ void Renderer::draw(glm::ivec2 vpSize){
         postFBO.updateSizeWindow(vpSize);
         viewportFBO.updateSizeWindow(vpSize);
     }
-
 
     maskFBO.Bind();
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 

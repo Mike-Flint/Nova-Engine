@@ -1,6 +1,7 @@
-#include "DetailsPanel.hpp"
+#include "Hierarchy.hpp"
 
-void WindowDetailsPanel::draw(){
+void WindowHierarchy::draw(){
+
     ImGuiID dockspace_id = ImGui::GetID("DockSpace");
     ImGuiDockNode* node = ImGui::DockBuilderGetNode(dockspace_id); 
 
@@ -13,8 +14,7 @@ void WindowDetailsPanel::draw(){
         ImGui::SetNextWindowDockID(left_id, ImGuiCond_Once);
     }
 
-    ImGui::Begin("Details");
-    ImGui::Text("Details");
-
+    ImGui::Begin("Hierarchy");
+    ImGui::Text("Give ME");
     ImGui::End();
 }

@@ -1,18 +1,23 @@
 #include "FBO.hpp"
 #include <iostream>
 
-FBO::FBO(glm::ivec2& size, GLenum format, bool hasDepth)
+FBO::FBO(glm::ivec2 size, GLenum format, bool hasDepth)
     : m_width(size.width), m_height(size.height), m_hasDepth(hasDepth),m_formatTexture(format) {
     Initialize();
 }
 
-void FBO::init(glm::ivec2& size, GLenum format, bool hasDepth){
-    m_width = size.width;
-    m_height = size.height;
-    m_hasDepth = hasDepth;
-    m_formatTexture = format;
-    
-    Initialize();
+void FBO::init(glm::ivec2 size, GLenum format, bool hasDepth){
+    if(!isInitialized){
+        isInitialized = true;
+        m_width = size.width;
+        m_height = size.height;
+        m_hasDepth = hasDepth;
+        m_formatTexture = format;
+        
+        Initialize();
+    }else{
+        std::cerr << "The object <FBO> is already initialized." << std::endl;
+    }
 }
 
 FBO::~FBO() {
@@ -25,7 +30,7 @@ FBO::~FBO() {
 }
 ;
 
-void FBO::updateSizeWindow(glm::ivec2& size){
+void FBO::updateSizeWindow(glm::ivec2 size){
     m_width = size.width;
     m_height = size.height;
 

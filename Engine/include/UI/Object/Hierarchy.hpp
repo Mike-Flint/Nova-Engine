@@ -1,13 +1,12 @@
 #pragma once
-#include "Renderer.hpp"
+
 #include "imgui.h"
 #include "imgui_internal.h"
 
-class WindowViewPort{
+class WindowHierarchy{
 private:
     bool once = true;
 public:
-    WindowViewPort() = default;
-    Renderer render;
+    WindowHierarchy() = default;
     void draw();
 };

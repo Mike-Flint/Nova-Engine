@@ -4,12 +4,14 @@
 
 class Renderer{
 private:
+    bool isInitialized = false;
+
     Shader programShader;
     Shader maskShader;
     Shader postProcesShader;
 
     Model programModel;
-    Model backpackModel;
+
 
     Camera camera;
 
@@ -24,6 +26,8 @@ public:
     FBO maskFBO;
     FBO postFBO;
     Renderer();
+
+    // void init();
 
     void draw(glm::ivec2 );
 };

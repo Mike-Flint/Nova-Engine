@@ -1,11 +1,6 @@
 #include "Model.hpp"
 
 
-void Model::init(char* path, bool gamma){
-    gammaCorrection = gamma;
-    loadModel(path);
-}
-
 void Model::Draw(Shader &shader, Camera &camera){
     for(unsigned int i = 0; i < meshes.size(); i++){ 
         meshes[i].Draw(shader, camera);

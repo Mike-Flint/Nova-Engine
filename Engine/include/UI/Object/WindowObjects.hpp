@@ -1,4 +1,5 @@
 #include "ViewPort.hpp"
+#include "TitleBar.hpp"
 #include "DetailsPanel.hpp"
 #include "ContentBrowser.hpp"
-#include "Outliner.hpp"
+#include "Hierarchy.hpp"
