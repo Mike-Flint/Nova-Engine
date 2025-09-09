@@ -8,7 +8,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_library(GLM INTERFACE)
 target_include_directories(GLM INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/Vendor)
 
-
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
@@ -16,13 +15,18 @@ find_package(assimp CONFIG REQUIRED)
 file(GLOB_RECURSE ENGINE_SOURCES "Engine/src/*.cpp")
 file(GLOB_RECURSE VENDOR_SOURCES "Vendor/*.cpp")
 
-add_executable(${PROJECT_NAME} main.cpp ${ENGINE_SOURCES} ${VENDOR_SOURCES})
+if (MSVC)
+    add_compile_options(/FS)
+endif()
+
+add_executable(${PROJECT_NAME} Engine/main.cpp ${ENGINE_SOURCES} ${VENDOR_SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE 
-                ${CMAKE_CURRENT_SOURCE_DIR}/Engine/include
-                ${CMAKE_CURRENT_SOURCE_DIR}/Engine/include/Rendering
-                ${CMAKE_CURRENT_SOURCE_DIR}/Engine/include/UI
-                ${CMAKE_CURRENT_SOURCE_DIR}/Engine/include/UI/Object
+                ${CMAKE_CURRENT_SOURCE_DIR}/Engine/src
+                ${CMAKE_CURRENT_SOURCE_DIR}/Engine/src/Rendering
+                ${CMAKE_CURRENT_SOURCE_DIR}/Engine/src/Scene
+                ${CMAKE_CURRENT_SOURCE_DIR}/Engine/src/UI
+                ${CMAKE_CURRENT_SOURCE_DIR}/Engine/src/UI/Windows
                 
                 ${CMAKE_CURRENT_SOURCE_DIR}/Vendor/imgui/include
                 ${CMAKE_CURRENT_SOURCE_DIR}/Vendor/stb_image/include

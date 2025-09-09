@@ -1,22 +1,22 @@
 #include "UIManager.hpp"
 
-bool UIManager::areAllWindowsDocked(){
-    ImGuiContext& g = *GImGui;
+bool UIManager::areAllWindowsDocked() {
 
-    // Перебираем все окна, которые знает ImGui
-    for (ImGuiWindow* window : g.Windows){
+    struct {
+        const char* name;
+        bool& dock;
+    } windows[] = {
+        { "Content Browser", m_State.ContentBrowser.Dock },
+        { "Details",         m_State.DetailsPanel.Dock },
+        { "Hierarchy",       m_State.Hierarchy.Dock }
+    };
 
-        if (!window->WasActive)
-            continue;
 
-        if (window->Flags & ImGuiWindowFlags_ChildWindow)
-            continue;
-
-        if (window->Flags & ImGuiWindowFlags_NoDocking)
-            continue;
-
-        if (window->DockNode == nullptr){
-            return false; 
+    for (const auto& w : windows) {
+        if(w.dock){
+            ImGuiWindow* window = ImGui::FindWindowByName(w.name);
+            if (window && !ToolsUI::IsWindowInDockSpace(window))
+                return false;
         }
     }
 
@@ -24,31 +24,37 @@ bool UIManager::areAllWindowsDocked(){
 }
 
 void UIManager::updateDockingLogic() {
-    ImGuiContext& g = *GImGui;
-    bool isMovingWindowNow = (g.MovingWindow != nullptr);
-
-
-    if (m_checkDockingOnNextFrame){
-        m_checkDockingOnNextFrame = false;
-        if (!areAllWindowsDocked()){
-
-            if (!m_layoutBeforeMove.empty()){
-                ImGui::LoadIniSettingsFromMemory(m_layoutBeforeMove.c_str(), m_layoutBeforeMove.size());
-            }
-        }
-        m_layoutBeforeMove.clear();
+    ImGuiWindow* winMoved = GImGui->MovingWindow;
+    bool isMovingWindowNow = false;
+    if (winMoved) {
+        std::string_view name = winMoved->Name;
+        isMovingWindowNow =
+            (name == "Content Browser" && m_State.ContentBrowser.Dock) ||
+            (name == "Details"         && m_State.DetailsPanel.Dock)   ||
+            (name == "Hierarchy"       && m_State.Hierarchy.Dock);
     }
 
-    if (!m_wasMovingWindowLastFrame && isMovingWindowNow){
+    if (m_CheckDockingOnNextFrame){
+        m_CheckDockingOnNextFrame = false;
+
+        if (!m_LayoutBeforeMove.empty() && !areAllWindowsDocked()){
+            ImGui::LoadIniSettingsFromMemory(m_LayoutBeforeMove.c_str(), m_LayoutBeforeMove.size());
+        }
+
+        m_LayoutBeforeMove.clear();
+    }
+
+    if (!m_WasMovingWindowLastFrame && isMovingWindowNow){
         size_t data_size = 0;
         const char* layout_data = ImGui::SaveIniSettingsToMemory(&data_size);
-        m_layoutBeforeMove.assign(layout_data, data_size);
+        m_LayoutBeforeMove.assign(layout_data, data_size);
     }
 
-    if (m_wasMovingWindowLastFrame && !isMovingWindowNow)
-        m_checkDockingOnNextFrame = true;
-    
-    m_wasMovingWindowLastFrame = isMovingWindowNow;
+    if (m_WasMovingWindowLastFrame && !isMovingWindowNow){
+        m_CheckDockingOnNextFrame = true;
+    }
+
+    m_WasMovingWindowLastFrame = isMovingWindowNow;
 }
 
 void UIManager::drawDockspaceLayout(){
@@ -66,52 +72,49 @@ void UIManager::drawDockspaceLayout(){
                                     ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoBringToFrontOnFocus | 
                                     ImGuiWindowFlags_NoNavFocus | ImGuiWindowFlags_MenuBar;
     
-    if (!m_canResize){
+    if (!m_State.CanResize){
         window_flags |= ImGuiWindowFlags_NoResize;
     }
+    ImGui::SetNextWindowSizeConstraints(ImVec2(400, 300), ImVec2(FLT_MAX, FLT_MAX));
 
     ImGui::Begin("DockSpace_Window", nullptr, window_flags);
 
     ImGui::PopStyleVar(4);
 
-    // Створюємо сам Dockspace всередині цього вікна
     ImGuiID dockspace_id = ImGui::GetID("DockSpace");
     ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
 }
 
+void UIManager::syncWindowWithImGui() {
+    
+    ImVec2 sizeWindow = ImGui::GetWindowSize();
+
+    if(sizeWindow.x != m_SizeWindow.x || sizeWindow.y != m_SizeWindow.y){
+        m_SizeWindow = glm::ivec2(sizeWindow.x, sizeWindow.y);
+        ImVec2 posWindow = ImGui::GetWindowPos();
+
+        AppWindow::SetWindowSize(m_SizeWindow.x, m_SizeWindow.y);
+        AppWindow::SetWindowPos(posWindow.x, posWindow.y);
+    }
+}
+
 void UIManager::drawUI() {
+    imGui.newFrame();
+
     drawDockspaceLayout();
 
-    {
-        ImVec2 window_pos = ImGui::GetWindowPos();
-        ImVec2 window_size = ImGui::GetWindowSize();
+        syncWindowWithImGui();
 
-        glfwSetWindowPos(GState::window, (int)window_pos.x, (int)window_pos.y);
-        glfwSetWindowSize(GState::window, (int)window_size.x, (int)window_size.y);
-    }
+        titleBar.Draw();
+        viewPort.Draw();
 
-    StateTitleBar* barState = titleBar.Draw();
+        if(m_State.ContentBrowser.Show) contentBrowser.Draw();
+        if(m_State.DetailsPanel.Show) detailsPanel.Draw();
+        if(m_State.Hierarchy.Show) hierarchy.Draw();
 
-    if(barState->ShowContentBrowser){
-        contentBrowser.draw();
-    }
-    if(barState->ShowDetailsPanel){
-        detailsPanel.draw();
-    }
-    if(barState->ShowHierarchy){
-        hierarchy.draw();
-    }
-    m_canResize = barState->CanResize;
-
-
-    viewPort.draw();
+        updateDockingLogic();
 
     ImGui::End();
-
-    updateDockingLogic();
-
-    if (glfwGetKey(GState::window, GLFW_KEY_ESCAPE) == GLFW_PRESS) 
-        glfwSetWindowShouldClose(GState::window, true);
 
     imGui.render();
 
@@ -124,4 +127,6 @@ void UIManager::drawUI() {
         ImGui::RenderPlatformWindowsDefault();
         glfwMakeContextCurrent(backup_current_context);
     }
+
+    
 }

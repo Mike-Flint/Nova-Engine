@@ -19,7 +19,7 @@ uniform mat4 model;
 
 void main() {
     crntPos = vec3(model * vec4(aPos, 1.0f));  
-    Normal = aNormal;
+    Normal = mat3(transpose(inverse(model))) * aNormal;
     TexCoord = aTex; 
     Tangent = aTangent;  
     Bitangent = aBitangent;

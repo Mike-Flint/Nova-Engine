@@ -1,32 +1,26 @@
-#include "VAO.hpp" // Підключення заголовочного файлу для класу VAO.
+#include "VAO.hpp"
 
-// Конструктор класу VAO, генерує об'єкт вершинного масиву.
 VAO::VAO() {
-    glGenVertexArrays(1, &ID); // Генерація ID для вершинного масиву (VAO).
+    glGenVertexArrays(1, &ID);
 }
 
-// Зв'язування об'єкта буфера вершин (VBO) з VAO і налаштування атрибутів вершини.
 void VAO::LinkAttrib(VBO& VBO, const GLuint& layout, const GLuint& numComponents, const GLenum& type, const GLsizei& stride, void* offset) {
-    VBO.Bind(); // Прив'язка VBO.
-    
-    // Визначення формату атрибутів вершини.
+    VBO.Bind();
+
     glVertexAttribPointer(layout, numComponents, type, GL_FALSE, stride, offset);
-    glEnableVertexAttribArray(layout); // Увімкнення атрибуту вершини.
+    glEnableVertexAttribArray(layout);
 
-    VBO.Unbind(); // Відв'язка VBO після налаштування.
+    VBO.Unbind();
 }
 
-// Прив'язка VAO.
 void VAO::Bind() {
-    glBindVertexArray(ID); // Прив'язка VAO за його ID.
+    glBindVertexArray(ID); 
 }
 
-// Відв'язка VAO.
 void VAO::Unbind() {
-    glBindVertexArray(0); // Відв'язка VAO (встановлення 0).
+    glBindVertexArray(0);
 }
 
-// Видалення VAO.
 void VAO::Delete() {
-    glDeleteVertexArrays(1, &ID); // Видалення VAO з пам'яті OpenGL.
+    glDeleteVertexArrays(1, &ID); 
 }

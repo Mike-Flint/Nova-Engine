@@ -30,37 +30,7 @@ GLuint CreateSquareOnScreen(){
     return VAO.ID;
 }
 
-GLuint CreateSquareOnScreenn(){
-    VAO VAO;
-    VAO.Bind();
-
-    std::vector<Vertex> quadVertices = {
-        {{-0.5f,  0.5f, 0.0f}, {}, {}, {0.0f, 1.0f}, {}},
-        {{-0.5f, -0.5f, 0.0f}, {}, {}, {0.0f, 0.0f}, {}},
-        {{ 0.5f, -0.5f, 0.0f}, {}, {}, {1.0f, 0.0f}, {}},
-        {{ 0.5f,  0.5f, 0.0f}, {}, {}, {1.0f, 1.0f}, {}}
-    };
-
-    VBO VBO(quadVertices);
-
-    std::vector<GLuint> quadIndices = {
-        0, 1, 2, 
-        0, 2, 3 
-    };
-
-    EBO EBO(quadIndices);
-
-    VAO.LinkAttrib(VBO, 0, 3, GL_FLOAT, sizeof(Vertex), (void*)0);
-    VAO.LinkAttrib(VBO, 2, 2, GL_FLOAT, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
-
-    VAO.Unbind();
-    VBO.Unbind();
-    EBO.Unbind();
-    return VAO.ID;
-}
-
-
-Renderer::Renderer() : 
+Renderer::Renderer(Scene* scene) : 
     programShader("\\Assets\\Shaders\\vertex_shader.vs",
                     "\\Assets\\Shaders\\fragment_shader.fs"),
 
@@ -70,10 +40,12 @@ Renderer::Renderer() :
     postProcesShader("\\Assets\\Shaders\\postProces.vs",
                         "\\Assets\\Shaders\\postProces.fs"),
 
-    programModel("\\Assets\\Object\\Sword\\Sword.obj")
+    maskFBO(glm::ivec2(600, 600), GL_RED),
+    postFBO(glm::ivec2(600, 600), GL_RGB, true),
+    viewportFBO(glm::ivec2(600, 600), GL_RGB, true),
+    GScene(scene)
     {
 
-    isInitialized = true;
     stbi_set_flip_vertically_on_load(true);
 
     glm::vec4 lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -87,50 +59,46 @@ Renderer::Renderer() :
     maskShader.Activate();
     glUniformMatrix4fv(glGetUniformLocation(maskShader.ID, "model"), 1, GL_FALSE, glm::value_ptr(objectModel));
 
-    maskFBO.init(glm::ivec2(600, 600), GL_RED);
-    postFBO.init(glm::ivec2(600, 600), GL_RGB, true);
-    viewportFBO.init(glm::ivec2(600, 600), GL_RGB, true);
-
     squareID = CreateSquareOnScreen();
-    squareeID = CreateSquareOnScreenn();
-
-    camera.init(glm::ivec2(600, 600), glm::ivec2(0, 35), glm::vec3(10.0f, 0.0f, 0.0f));
 
     GLuint error = glGetError();
     if (error != GL_NO_ERROR) {
         std::cerr << "OpenGL Error: " << error << std::endl;
     }
-}
+} 
 
-void Renderer::draw(glm::ivec2 vpSize){
+void Renderer::Draw(){
+    glEnable(GL_DEPTH_TEST);
+    
+    ImVec2 viewportSize = ImGui::GetContentRegionAvail();
+    glm::ivec2 vpSize = glm::ivec2(viewportSize.x, viewportSize.y);
+    Camera *camera = GScene->GetComponentsOfType<Camera>()[0];
+    Model *programModel = GScene->GetComponentsOfType<Model>()[0];
 
-    camera.inputs(GState::window);
-    camera.updateMatrix(45.0f, 0.1f, 100.0f);
+    
     if (vpSize.width > 1 || vpSize.height > 1){
-        camera.updateSizeWindow(vpSize);
-        maskFBO.updateSizeWindow(vpSize);
-        postFBO.updateSizeWindow(vpSize);
-        viewportFBO.updateSizeWindow(vpSize);
+        camera->UpdateSizeWindow(vpSize);
+        maskFBO.UpdateSizeWindow(vpSize);
+        postFBO.UpdateSizeWindow(vpSize);
+        viewportFBO.UpdateSizeWindow(vpSize);
     }
 
-    maskFBO.Bind();
-        glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        maskShader.Activate();
-        programModel.Draw(maskShader, camera);
-    maskFBO.Unbind();
+    camera->Inputs();
+    camera->UpdateMatrix();
 
     postFBO.Bind();
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         programShader.Activate();
-        programModel.Draw(programShader, camera);
+        programModel->Draw(programShader, *camera);
     postFBO.Unbind();
 
-    // glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
-    // glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-
+    maskFBO.Bind();
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f); 
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        maskShader.Activate();
+        programModel->DrawMask(maskShader, *camera, SelectedObjects);
+    maskFBO.Unbind();
 
     viewportFBO.Bind();
         glClearColor(0.07f, 0.13f, 0.17f, 1.0f);
@@ -140,11 +108,11 @@ void Renderer::draw(glm::ivec2 vpSize){
         glViewport(0, 0 , vpSize.width, vpSize.height);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, postFBO.textureId);
+        glBindTexture(GL_TEXTURE_2D, postFBO.TextureID);
         glUniform1i(glGetUniformLocation(postProcesShader.ID, "screenTexture"), 0);
 
         glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, maskFBO.textureId);
+        glBindTexture(GL_TEXTURE_2D, maskFBO.TextureID);
         glUniform1i(glGetUniformLocation(postProcesShader.ID, "maskTexture"), 1);
         
         glBindVertexArray(squareID);
@@ -152,3 +120,5 @@ void Renderer::draw(glm::ivec2 vpSize){
         glBindVertexArray(0);
     viewportFBO.Unbind();
 }
+
+
