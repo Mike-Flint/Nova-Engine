@@ -87,5 +87,5 @@ vec4 spotLight(){
 }
 
 void main() {
-    FragColor = directLight(); // В іншому випадку залишаємо колір пікселя без змін
+    FragColor = directLight();
 }
