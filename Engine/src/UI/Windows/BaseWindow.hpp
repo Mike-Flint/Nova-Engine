@@ -21,11 +21,7 @@ protected:
 
     std::string_view m_windowName;
 
-<<<<<<< HEAD
     virtual void DrawContent() = 0;
-=======
-    virtual void DrawContent() = 0; 
->>>>>>> 209b5a9 (END)
 
 public:
     BaseWindow(const char* windowName, EditorWindowConfig&  windowToggle, Scene* scene): 

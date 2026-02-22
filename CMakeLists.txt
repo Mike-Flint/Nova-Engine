@@ -15,10 +15,6 @@ find_package(assimp CONFIG REQUIRED)
 file(GLOB_RECURSE ENGINE_SOURCES "Engine/src/*.cpp")
 file(GLOB_RECURSE VENDOR_SOURCES "Vendor/*.cpp")
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 209b5a9 (END)
 if (MSVC)
     add_compile_options(/FS)
 endif()
@@ -29,10 +25,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
                 ${CMAKE_CURRENT_SOURCE_DIR}/Engine/src
                 ${CMAKE_CURRENT_SOURCE_DIR}/Engine/src/Rendering
                 ${CMAKE_CURRENT_SOURCE_DIR}/Engine/src/Scene
-<<<<<<< HEAD
-=======
                 ${CMAKE_CURRENT_SOURCE_DIR}/Engine/src/Scene/Components
->>>>>>> 209b5a9 (END)
                 ${CMAKE_CURRENT_SOURCE_DIR}/Engine/src/UI
                 ${CMAKE_CURRENT_SOURCE_DIR}/Engine/src/UI/Windows
                 

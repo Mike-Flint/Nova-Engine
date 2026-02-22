@@ -1,11 +1,8 @@
 #pragma once
 #include "Shader.hpp"
 #include "Mesh.hpp"
-<<<<<<< HEAD
 #include "Components/Camera.hpp"
-=======
 #include "Camera.hpp"
->>>>>>> 209b5a9 (END)
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
