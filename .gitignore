@@ -2,4 +2,5 @@
 /.vs
 /.git
 /Build
-/imgui.ini
+/imgui.iniuild/
+build/
