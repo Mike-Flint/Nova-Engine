@@ -1,5 +1,9 @@
 #pragma once
+<<<<<<< HEAD
 #include "Components.hpp"
+=======
+#include "Model.hpp"
+>>>>>>> 209b5a9 (END)
 #include "Scene.hpp"
 #include <optional>
 

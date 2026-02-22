@@ -3,7 +3,11 @@
 #include "imgui.h"
 #include "EditorWindowState.hpp"
 #include "imfilebrowser.h"
+<<<<<<< HEAD
 #include "Components.hpp"
+=======
+#include "Model.hpp"
+>>>>>>> 209b5a9 (END)
 #include "AppWindow.hpp"
 
 namespace ImWindows{
